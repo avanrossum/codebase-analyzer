@@ -17,6 +17,7 @@ Master index of all task folders under `tasks/`. Update this file when a task is
 |--------|-------|--------|-------|
 | `tasks/2026-03-30_project-scaffolding/` | Project Scaffolding | ✅ Complete | Python package, CLI, 12 profiles, 8 prompts, tests passing |
 | `tasks/2026-03-30_sqlite-state-layer/` | SQLite State Layer | ✅ Complete | Job queue, resume logic, progress stats — 35 tests |
+| `tasks/2026-03-30_file-walker/` | File Walker | ✅ Complete | Profile system, binary detection, .gitignore — 32 tests |
 
 ---
 

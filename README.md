@@ -27,7 +27,22 @@ pip install -e ".[dev]"
 ## Prerequisites
 
 - Python 3.9+
-- [Ollama](https://ollama.com) running locally with a model pulled (default: `qwen3:32b-q5_K_M`)
+- A local LLM server running with a capable model. Supported backends:
+  - [Ollama](https://ollama.com) (default, uses `/api/chat`)
+  - [LM Studio](https://lmstudio.ai) (uses OpenAI-compatible `/v1/chat/completions`)
+  - Any OpenAI-compatible API (vLLM, llama.cpp server, etc.)
+
+### Model Requirements
+
+- **Context window: 8192 tokens minimum, 16384+ recommended.** The tool sends a ~500 token system prompt plus the full file content, and the model must generate a structured JSON response. Files that exceed the context window will error and be skipped.
+- **JSON output quality matters.** The model must reliably produce valid JSON. Larger models (30B+) perform significantly better at this than smaller ones.
+- Default model: `qwen3:32b-q5_K_M` (Ollama). Override with `--model`.
+
+### Performance Notes
+
+- Each file requires **3 LLM calls minimum** (two analysis passes + one quorum judge), plus retries on disagreement. A 100-file repo means 300+ inference calls.
+- Default concurrency is 1 (single-GPU safe). For multi-GPU setups, increase with `--concurrency`.
+- Large codebases can take hours on consumer hardware. The tool is fully resumable — stop and restart at any time.
 
 ## Quick Start
 

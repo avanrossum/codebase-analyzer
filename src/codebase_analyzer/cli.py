@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.table import Table
 
 from codebase_analyzer import __version__
-from codebase_analyzer.analyzer import OllamaClient, analyze_file
+from codebase_analyzer.analyzer import LLMClient, analyze_file
 from codebase_analyzer.output import (
     ensure_output_dirs,
     generate_run_report,
@@ -174,7 +174,7 @@ def analyze(repo_path, output, profiles, profile_file, all_text_files,
         console.print()
 
         # Analysis loop
-        with OllamaClient(base_url=ollama_url, model=model) as client:
+        with LLMClient(base_url=ollama_url, model=model) as client:
             for i, job in enumerate(jobs, 1):
                 if _shutdown_requested:
                     console.print(f"\n[yellow]Stopped after {i - 1}/{total} files.[/yellow]")

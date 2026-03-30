@@ -263,14 +263,20 @@ def extract_json(text: str) -> dict:
 
 # -- Ollama client --
 
-class OllamaClient:
-    """HTTP client for the Ollama-compatible API."""
+class LLMClient:
+    """HTTP client for Ollama-compatible and OpenAI-compatible APIs.
+
+    Auto-detects API style on first call:
+    - Ollama API: /api/chat (used by Ollama)
+    - OpenAI API: /v1/chat/completions (used by LM Studio, vLLM, llama.cpp, etc.)
+    """
 
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "qwen3:32b-q5_K_M"):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self._client = httpx.Client(timeout=300.0)
         self._consecutive_failures = 0
+        self._api_style: str | None = None  # "ollama" or "openai"
 
     def close(self):
         self._client.close()
@@ -281,49 +287,102 @@ class OllamaClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def _detect_api_style(self):
+        """Detect whether the server speaks Ollama or OpenAI API."""
+        # Try Ollama first
+        try:
+            resp = self._client.get(f"{self.base_url}/api/tags", timeout=5.0)
+            if resp.status_code == 200:
+                self._api_style = "ollama"
+                log.info("Detected Ollama API at %s", self.base_url)
+                return
+        except (httpx.ConnectError, httpx.TimeoutException):
+            pass
+
+        # Try OpenAI-compatible
+        try:
+            resp = self._client.get(f"{self.base_url}/v1/models", timeout=5.0)
+            if resp.status_code == 200:
+                self._api_style = "openai"
+                log.info("Detected OpenAI-compatible API at %s", self.base_url)
+                return
+        except (httpx.ConnectError, httpx.TimeoutException):
+            pass
+
+        raise ConnectionError(
+            f"No LLM API detected at {self.base_url}. "
+            "Tried Ollama (/api/tags) and OpenAI (/v1/models)."
+        )
+
+    def _build_request(self, system: str, user: str) -> tuple[str, dict]:
+        """Build the URL and payload for the appropriate API style."""
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+
+        if self._api_style == "ollama":
+            return f"{self.base_url}/api/chat", {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+            }
+        else:
+            return f"{self.base_url}/v1/chat/completions", {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+                "temperature": 0.7,
+            }
+
+    def _extract_content(self, data: dict) -> str:
+        """Extract the response text from the API response."""
+        if self._api_style == "ollama":
+            return data["message"]["content"]
+        else:
+            return data["choices"][0]["message"]["content"]
+
     def chat(self, system: str, user: str) -> str:
         """Send a chat completion request and return the response text.
 
-        Implements exponential backoff on connection failures.
+        Auto-detects API style on first call. Implements exponential backoff
+        on connection failures.
         """
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            "stream": False,
-        }
+        if self._api_style is None:
+            self._detect_api_style()
+
+        url, payload = self._build_request(system, user)
 
         backoff = CONNECTION_BACKOFF_BASE
         for attempt in range(CONNECTION_MAX_RETRIES):
             try:
-                response = self._client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
-                )
+                response = self._client.post(url, json=payload)
                 response.raise_for_status()
                 self._consecutive_failures = 0
                 data = response.json()
-                return data["message"]["content"]
+                return self._extract_content(data)
             except (httpx.ConnectError, httpx.TimeoutException) as e:
                 self._consecutive_failures += 1
                 if self._consecutive_failures >= CONNECTION_MAX_RETRIES:
                     raise ConnectionError(
-                        f"Ollama unavailable after {CONNECTION_MAX_RETRIES} consecutive failures: {e}"
+                        f"LLM server unavailable after {CONNECTION_MAX_RETRIES} consecutive failures: {e}"
                     ) from e
                 log.warning(
-                    "Ollama connection failed (attempt %d/%d), retrying in %ds: %s",
+                    "Connection failed (attempt %d/%d), retrying in %ds: %s",
                     attempt + 1, CONNECTION_MAX_RETRIES, backoff, e,
                 )
                 time.sleep(backoff)
                 backoff = min(backoff * 2, CONNECTION_BACKOFF_MAX)
             except httpx.HTTPStatusError as e:
                 raise RuntimeError(
-                    f"Ollama API error ({e.response.status_code}): {e.response.text}"
+                    f"LLM API error ({e.response.status_code}): {e.response.text}"
                 ) from e
 
-        raise ConnectionError(f"Ollama unavailable after {CONNECTION_MAX_RETRIES} attempts")
+        raise ConnectionError(f"LLM server unavailable after {CONNECTION_MAX_RETRIES} attempts")
+
+
+# Backwards-compatible alias
+OllamaClient = LLMClient
 
 
 # -- Analysis pipeline --

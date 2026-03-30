@@ -53,7 +53,7 @@ class TestAnalyzeCommand:
         repo = _make_repo(tmp_path)
         output = tmp_path / "output"
 
-        with patch("codebase_analyzer.cli.OllamaClient") as MockClient:
+        with patch("codebase_analyzer.cli.LLMClient") as MockClient:
             instance = MockClient.return_value.__enter__.return_value
             instance.chat.side_effect = _mock_chat
 
@@ -88,7 +88,7 @@ class TestAnalyzeCommand:
         repo = _make_repo(tmp_path)
         output = tmp_path / "output"
 
-        with patch("codebase_analyzer.cli.OllamaClient") as MockClient:
+        with patch("codebase_analyzer.cli.LLMClient") as MockClient:
             instance = MockClient.return_value.__enter__.return_value
             instance.chat.side_effect = _mock_chat
 
@@ -116,7 +116,7 @@ class TestAnalyzeCommand:
         repo = _make_repo(tmp_path)
         output = tmp_path / "output"
 
-        with patch("codebase_analyzer.cli.OllamaClient") as MockClient:
+        with patch("codebase_analyzer.cli.LLMClient") as MockClient:
             instance = MockClient.return_value.__enter__.return_value
             instance.chat.side_effect = _mock_chat
 
@@ -161,7 +161,7 @@ class TestAnalyzeCommand:
                 return disagree
             return SAMPLE_ANALYSIS
 
-        with patch("codebase_analyzer.cli.OllamaClient") as MockClient:
+        with patch("codebase_analyzer.cli.LLMClient") as MockClient:
             instance = MockClient.return_value.__enter__.return_value
             instance.chat.side_effect = mock_always_disagree
 
@@ -187,7 +187,7 @@ class TestStatusCommand:
         repo = _make_repo(tmp_path)
         output = tmp_path / "output"
 
-        with patch("codebase_analyzer.cli.OllamaClient") as MockClient:
+        with patch("codebase_analyzer.cli.LLMClient") as MockClient:
             instance = MockClient.return_value.__enter__.return_value
             instance.chat.side_effect = _mock_chat
 

@@ -196,10 +196,16 @@ def analyze(repo_path, output, profiles, profile_file, all_text_files,
                 try:
                     result = analyze_file(client, file_path, content, max_retries=max_retries)
                 except ConnectionError as e:
-                    console.print(f"\n[red]Lost connection to Ollama:[/red] {e}")
+                    console.print(f"\n[red]Lost connection to LLM server:[/red] {e}")
                     console.print("State saved. Resume by running the same command.")
                     _finalize(output_dir, db, walk_result, started_at)
                     sys.exit(1)
+                except RuntimeError as e:
+                    # API errors (context length exceeded, model not found, etc.)
+                    error_msg = str(e)
+                    console.print(f"[{i}/{total}] [red]error:[/red] {file_path}: {error_msg[:120]}")
+                    db.update_status(file_path, "error", error_log=error_msg)
+                    continue
 
                 # Update state and write output
                 if result.is_complete:

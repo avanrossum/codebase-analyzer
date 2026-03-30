@@ -289,24 +289,28 @@ class LLMClient:
 
     def _detect_api_style(self):
         """Detect whether the server speaks Ollama or OpenAI API."""
-        # Try Ollama first
+        # Try Ollama first — check that response contains a "models" array
         try:
             resp = self._client.get(f"{self.base_url}/api/tags", timeout=5.0)
             if resp.status_code == 200:
-                self._api_style = "ollama"
-                log.info("Detected Ollama API at %s", self.base_url)
-                return
-        except (httpx.ConnectError, httpx.TimeoutException):
+                data = resp.json()
+                if isinstance(data.get("models"), list):
+                    self._api_style = "ollama"
+                    log.info("Detected Ollama API at %s", self.base_url)
+                    return
+        except (httpx.ConnectError, httpx.TimeoutException, Exception):
             pass
 
-        # Try OpenAI-compatible
+        # Try OpenAI-compatible — check for "data" array
         try:
             resp = self._client.get(f"{self.base_url}/v1/models", timeout=5.0)
             if resp.status_code == 200:
-                self._api_style = "openai"
-                log.info("Detected OpenAI-compatible API at %s", self.base_url)
-                return
-        except (httpx.ConnectError, httpx.TimeoutException):
+                data = resp.json()
+                if isinstance(data.get("data"), list):
+                    self._api_style = "openai"
+                    log.info("Detected OpenAI-compatible API at %s", self.base_url)
+                    return
+        except (httpx.ConnectError, httpx.TimeoutException, Exception):
             pass
 
         raise ConnectionError(

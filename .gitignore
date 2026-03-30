@@ -1,0 +1,5 @@
+# Project memory (generated)
+.memory/
+
+# AI session context (not tracked — local governance only)
+CLAUDE.md

@@ -1,0 +1,13 @@
+name: java
+extensions: [.java, .kt, .kts, .gradle]
+include_patterns:
+  - "pom.xml"
+  - "build.gradle*"
+  - "settings.gradle*"
+exclude_dirs:
+  - "target"
+  - ".gradle"
+  - "build"
+markers:
+  - "pom.xml"
+  - "build.gradle"

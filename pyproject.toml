@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codebase-analyzer"
+version = "0.1.0"
+description = "Language-agnostic CLI tool that generates structured file descriptions using local LLMs via Ollama"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Aiden van Rossum" },
+]
+keywords = ["codebase", "analyzer", "llm", "ollama", "documentation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Documentation",
+]
+dependencies = [
+    "httpx>=0.24",
+    "click>=8.0",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "pathspec>=0.11",
+]
+
+[project.optional-dependencies]
+api = ["anthropic>=0.39"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+]
+
+[project.scripts]
+codebase-analyzer = "codebase_analyzer.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/avanrossum/codebase-analyzer"
+Repository = "https://github.com/avanrossum/codebase-analyzer"
+Issues = "https://github.com/avanrossum/codebase-analyzer/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codebase_analyzer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

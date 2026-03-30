@@ -1,0 +1,5 @@
+name: config
+extensions: [.yaml, .yml, .json, .toml, .ini, .cfg, .conf, .env.example]
+include_patterns: []
+exclude_dirs: []
+markers: []

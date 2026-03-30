@@ -1,0 +1,5 @@
+name: templates
+extensions: [.jinja, .jinja2, .mako, .ejs, .hbs, .pug, .erb]
+include_patterns: []
+exclude_dirs: []
+markers: []

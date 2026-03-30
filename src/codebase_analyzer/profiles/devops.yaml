@@ -1,0 +1,14 @@
+name: devops
+extensions: [.sh, .bash, .dockerfile]
+include_patterns:
+  - "Dockerfile*"
+  - "docker-compose*.yml"
+  - "Makefile"
+  - "Jenkinsfile"
+  - "*.tf"
+  - ".github/workflows/*.yml"
+exclude_dirs: []
+markers:
+  - "Dockerfile"
+  - "docker-compose.yml"
+  - "Makefile"

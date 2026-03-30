@@ -1,0 +1,5 @@
+name: web
+extensions: [.html, .css, .scss, .sass, .less, .vue, .svelte]
+include_patterns: []
+exclude_dirs: []
+markers: []

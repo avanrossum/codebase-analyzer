@@ -1,0 +1,5 @@
+name: sql
+extensions: [.sql]
+include_patterns: []
+exclude_dirs: []
+markers: []

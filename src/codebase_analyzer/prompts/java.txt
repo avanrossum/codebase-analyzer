@@ -1,0 +1,1 @@
+Identify design patterns (Factory, Singleton, Observer). Note Spring/Jakarta annotations, interface implementations, and inheritance hierarchies.

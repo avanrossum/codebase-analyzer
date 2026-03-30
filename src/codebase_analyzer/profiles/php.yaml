@@ -1,0 +1,9 @@
+name: php
+extensions: [.php]
+include_patterns:
+  - "composer.json"
+  - "composer.lock"
+exclude_dirs:
+  - "vendor"
+markers:
+  - "composer.json"

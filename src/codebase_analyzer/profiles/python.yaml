@@ -1,0 +1,24 @@
+name: python
+extensions: [.py, .pyx, .pxd]
+include_patterns:
+  - "requirements*.txt"
+  - "setup.py"
+  - "setup.cfg"
+  - "pyproject.toml"
+  - "Pipfile"
+  - "tox.ini"
+exclude_dirs:
+  - "__pycache__"
+  - ".tox"
+  - ".eggs"
+  - "*.egg-info"
+  - "venv"
+  - ".venv"
+  - "env"
+  - ".mypy_cache"
+  - ".pytest_cache"
+markers:
+  - "setup.py"
+  - "pyproject.toml"
+  - "requirements.txt"
+  - "Pipfile"

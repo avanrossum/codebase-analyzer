@@ -1,0 +1,1 @@
+Describe what tables/views/functions this creates or modifies, any migrations it performs, and notable constraints or indexes.

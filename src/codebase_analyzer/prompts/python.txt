@@ -1,0 +1,1 @@
+Pay attention to Python version indicators (__future__ imports, print statements vs functions, type hints). Note any use of metaclasses, descriptors, or monkey-patching.

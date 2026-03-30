@@ -1,0 +1,1 @@
+Describe what this configuration controls, what system or service consumes it, and any environment-specific overrides.

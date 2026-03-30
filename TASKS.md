@@ -8,6 +8,7 @@ Master index of all task folders under `tasks/`. Update this file when a task is
 
 | Folder | Title | Status | Notes |
 |--------|-------|--------|-------|
+| `tasks/2026-03-30_project-scaffolding/` | Project Scaffolding | 🔵 In Progress | Python package structure, CLI entry point, module stubs |
 
 ---
 

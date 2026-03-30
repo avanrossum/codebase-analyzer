@@ -1,0 +1,9 @@
+name: go
+extensions: [.go]
+include_patterns:
+  - "go.mod"
+  - "go.sum"
+exclude_dirs:
+  - "vendor"
+markers:
+  - "go.mod"

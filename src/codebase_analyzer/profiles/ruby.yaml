@@ -1,0 +1,11 @@
+name: ruby
+extensions: [.rb, .rake, .gemspec]
+include_patterns:
+  - "Gemfile"
+  - "Rakefile"
+  - ".ruby-version"
+exclude_dirs:
+  - "vendor/bundle"
+  - ".bundle"
+markers:
+  - "Gemfile"

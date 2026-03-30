@@ -1,0 +1,1 @@
+Note module system (CommonJS require vs ESM import). Identify framework patterns (React hooks/components, Express middleware, Vue composition API). Flag any dynamic imports or eval usage.

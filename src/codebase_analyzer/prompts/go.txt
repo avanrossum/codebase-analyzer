@@ -1,0 +1,1 @@
+Note goroutine usage, channel patterns, interface satisfaction. Identify any init() functions and their side effects.

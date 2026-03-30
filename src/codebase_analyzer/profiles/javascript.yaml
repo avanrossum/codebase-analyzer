@@ -1,0 +1,16 @@
+name: javascript
+extensions: [.js, .jsx, .ts, .tsx, .mjs, .cjs]
+include_patterns:
+  - "package.json"
+  - "tsconfig*.json"
+  - ".eslintrc*"
+  - "webpack.config.*"
+  - "vite.config.*"
+exclude_dirs:
+  - "node_modules"
+  - "dist"
+  - "build"
+  - ".next"
+  - "coverage"
+markers:
+  - "package.json"

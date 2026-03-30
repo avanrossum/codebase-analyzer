@@ -1,0 +1,9 @@
+name: rust
+extensions: [.rs]
+include_patterns:
+  - "Cargo.toml"
+  - "Cargo.lock"
+exclude_dirs:
+  - "target"
+markers:
+  - "Cargo.toml"

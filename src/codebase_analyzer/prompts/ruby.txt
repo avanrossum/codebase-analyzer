@@ -1,0 +1,1 @@
+Note metaprogramming (method_missing, define_method), DSL patterns, mixin usage. Identify Rails conventions if present.

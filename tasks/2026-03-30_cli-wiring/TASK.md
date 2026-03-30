@@ -27,3 +27,4 @@ Wire all modules together into working CLI commands. The `analyze` command runs 
 - `relationships` and `resolve-flagged` still stub ("Not yet implemented") — Phase 2
 - The tool is now end-to-end functional for Phase 1 (file analysis)
 - 143 total tests passing
+- Live tested against LM Studio + qwen3.5-35b-a3b: 3/3 files, 100% quorum pass, all high confidence

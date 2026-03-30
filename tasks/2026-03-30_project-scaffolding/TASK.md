@@ -25,11 +25,20 @@ Per `codebase-analyzer-spec.md`, create:
 Goal: `pip install -e .` works, `codebase-analyzer --help` shows all commands/flags.
 
 ## Changes Made
-*To be updated as work proceeds.*
+- Created `pyproject.toml` with hatchling build, all dependencies, optional `[api]` extra for anthropic
+- Created `src/codebase_analyzer/` package with `__init__.py`, `cli.py`, `walker.py`, `analyzer.py`, `relationships.py`, `state.py`, `output.py`
+- Created `cli.py` with Click group and 4 subcommands: `analyze`, `status`, `relationships`, `resolve-flagged` — all flags from spec wired up
+- Created 12 bundled language profiles (YAML): python, javascript, web, config, devops, sql, templates, java, ruby, go, rust, php
+- Created 8 prompt snippets: python, javascript, java, go, ruby, config, sql, shell
+- Created `tests/test_cli.py` with 6 smoke tests (all passing)
+- Created `README.md` with installation, usage, and output structure docs
+- Updated `.gitignore` with Python/IDE/OS patterns
 
 ## Status
-🔵 In Progress
+✅ Complete
 
 ## Notes
 - Entry point: `codebase-analyzer` CLI command via `pyproject.toml` `[project.scripts]`
-- `anthropic` must be an optional dependency — the tool works fully without it
+- `anthropic` is an optional dependency under `[api]` extra — core tool works without it
+- Used Click group with subcommands rather than mode flags — cleaner CLI ergonomics
+- venv at `.venv/` — `source .venv/bin/activate` to use

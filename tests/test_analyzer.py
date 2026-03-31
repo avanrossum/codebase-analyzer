@@ -172,7 +172,7 @@ def make_mock_client(responses: list[str]) -> OllamaClient:
     client.base_url = "http://mock"
     client.model = "mock"
     client._responses = iter(responses)
-    client.chat = MagicMock(side_effect=lambda s, u: next(client._responses))
+    client.chat = MagicMock(side_effect=lambda s, u, **kwargs: next(client._responses))
     return client
 
 

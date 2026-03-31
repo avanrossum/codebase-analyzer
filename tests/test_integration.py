@@ -41,7 +41,7 @@ def _make_repo(tmp_path):
     return repo
 
 
-def _mock_chat(system, user):
+def _mock_chat(system, user, **kwargs):
     """Mock Ollama chat that returns appropriate responses."""
     if "comparing two independent analyses" in system:
         return QUORUM_AGREE
@@ -154,7 +154,7 @@ class TestAnalyzeCommand:
 
         call_count = 0
 
-        def mock_always_disagree(system, user):
+        def mock_always_disagree(system, user, **kwargs):
             nonlocal call_count
             call_count += 1
             if "comparing two independent analyses" in system:

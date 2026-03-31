@@ -7,7 +7,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import httpx
 
@@ -321,7 +321,7 @@ class LLMClient:
             "Tried Ollama (/api/tags) and OpenAI (/v1/models)."
         )
 
-    def _build_request(self, system: str, user: str) -> tuple[str, dict]:
+    def _build_request(self, system: str, user: str, stream: bool = True) -> tuple[str, dict]:
         """Build the URL and payload for the appropriate API style."""
         messages = [
             {"role": "system", "content": system},
@@ -332,42 +332,97 @@ class LLMClient:
             return f"{self.base_url}/api/chat", {
                 "model": self.model,
                 "messages": messages,
-                "stream": False,
+                "stream": stream,
             }
         else:
             return f"{self.base_url}/v1/chat/completions", {
                 "model": self.model,
                 "messages": messages,
-                "stream": False,
+                "stream": stream,
                 "temperature": 0.7,
             }
 
+    def _read_stream(self, response: httpx.Response, on_token: "Callable[[str], None] | None" = None) -> str:
+        """Read a streaming response and accumulate the full text.
+
+        Args:
+            response: The streaming httpx response.
+            on_token: Optional callback invoked with each token as it arrives.
+        """
+        content = []
+        for line in response.iter_lines():
+            if not line:
+                continue
+
+            if self._api_style == "openai":
+                # SSE format: "data: {...}" or "data: [DONE]"
+                if not line.startswith("data: "):
+                    continue
+                data_str = line[6:]
+                if data_str.strip() == "[DONE]":
+                    break
+                try:
+                    data = json.loads(data_str)
+                    delta = data.get("choices", [{}])[0].get("delta", {})
+                    token = delta.get("content", "")
+                    if token:
+                        content.append(token)
+                        if on_token:
+                            on_token(token)
+                except (json.JSONDecodeError, IndexError, KeyError):
+                    continue
+            else:
+                # Ollama: newline-delimited JSON
+                try:
+                    data = json.loads(line)
+                    token = data.get("message", {}).get("content", "")
+                    if token:
+                        content.append(token)
+                        if on_token:
+                            on_token(token)
+                    if data.get("done"):
+                        break
+                except json.JSONDecodeError:
+                    continue
+
+        return "".join(content)
+
     def _extract_content(self, data: dict) -> str:
-        """Extract the response text from the API response."""
+        """Extract the response text from a non-streaming API response."""
         if self._api_style == "ollama":
             return data["message"]["content"]
         else:
             return data["choices"][0]["message"]["content"]
 
-    def chat(self, system: str, user: str) -> str:
+    def chat(self, system: str, user: str, on_token: "Callable[[str], None] | None" = None) -> str:
         """Send a chat completion request and return the response text.
 
+        Uses streaming by default to keep proxy connections alive.
         Auto-detects API style on first call. Implements exponential backoff
         on connection failures.
+
+        Args:
+            system: System prompt.
+            user: User prompt.
+            on_token: Optional callback invoked with each token as it streams in.
         """
         if self._api_style is None:
             self._detect_api_style()
 
-        url, payload = self._build_request(system, user)
+        url, payload = self._build_request(system, user, stream=True)
 
         backoff = CONNECTION_BACKOFF_BASE
         for attempt in range(CONNECTION_MAX_RETRIES):
             try:
-                response = self._client.post(url, json=payload)
-                response.raise_for_status()
-                self._consecutive_failures = 0
-                data = response.json()
-                return self._extract_content(data)
+                with self._client.stream("POST", url, json=payload) as response:
+                    if response.status_code >= 400:
+                        # Read the error body before raising
+                        error_body = response.read().decode(errors="replace")
+                        raise RuntimeError(
+                            f"LLM API error ({response.status_code}): {error_body[:500]}"
+                        )
+                    self._consecutive_failures = 0
+                    return self._read_stream(response, on_token=on_token)
             except (httpx.ConnectError, httpx.TimeoutException) as e:
                 self._consecutive_failures += 1
                 if self._consecutive_failures >= CONNECTION_MAX_RETRIES:
@@ -380,10 +435,8 @@ class LLMClient:
                 )
                 time.sleep(backoff)
                 backoff = min(backoff * 2, CONNECTION_BACKOFF_MAX)
-            except httpx.HTTPStatusError as e:
-                raise RuntimeError(
-                    f"LLM API error ({e.response.status_code}): {e.response.text}"
-                ) from e
+            except RuntimeError:
+                raise
 
         raise ConnectionError(f"LLM server unavailable after {CONNECTION_MAX_RETRIES} attempts")
 
@@ -412,7 +465,8 @@ def build_quorum_prompt(file_path: str, pass1: dict, pass2: dict) -> tuple[str, 
     return QUORUM_SYSTEM_PROMPT, user
 
 
-def run_analysis_pass(client: OllamaClient, file_path: str, file_content: str, language: str) -> dict:
+def run_analysis_pass(client: OllamaClient, file_path: str, file_content: str, language: str,
+                      on_token: Callable[[str], None] | None = None) -> dict:
     """Run a single analysis pass with JSON parse retry.
 
     Returns the parsed JSON result.
@@ -421,7 +475,7 @@ def run_analysis_pass(client: OllamaClient, file_path: str, file_content: str, l
     system, user = build_analysis_prompt(file_path, file_content, language)
 
     for attempt in range(JSON_PARSE_MAX_RETRIES):
-        raw = client.chat(system, user)
+        raw = client.chat(system, user, on_token=on_token)
         try:
             return extract_json(raw)
         except (json.JSONDecodeError, ValueError) as e:
@@ -440,7 +494,8 @@ def run_analysis_pass(client: OllamaClient, file_path: str, file_content: str, l
     raise AnalysisError("JSON parse failure", file_path=file_path)
 
 
-def run_quorum_judge(client: OllamaClient, file_path: str, pass1: dict, pass2: dict) -> dict:
+def run_quorum_judge(client: OllamaClient, file_path: str, pass1: dict, pass2: dict,
+                     on_token: Callable[[str], None] | None = None) -> dict:
     """Run the quorum judge to compare two analysis passes.
 
     Returns the parsed judge verdict with keys: agree, merged_result/disagreements, confidence.
@@ -449,7 +504,7 @@ def run_quorum_judge(client: OllamaClient, file_path: str, pass1: dict, pass2: d
     system, user = build_quorum_prompt(file_path, pass1, pass2)
 
     for attempt in range(JSON_PARSE_MAX_RETRIES):
-        raw = client.chat(system, user)
+        raw = client.chat(system, user, on_token=on_token)
         try:
             result = extract_json(raw)
             # Validate expected fields
@@ -476,10 +531,14 @@ def analyze_file(
     file_path: str,
     file_content: str,
     max_retries: int = 3,
+    on_token: Callable[[str], None] | None = None,
 ) -> "AnalysisResult":
     """Run the full analysis pipeline for a single file.
 
     Pipeline: pass1 → pass2 → quorum judge → retry if disagreement.
+
+    Args:
+        on_token: Optional callback invoked with each token as it streams in.
 
     Returns an AnalysisResult with the outcome.
     """
@@ -488,13 +547,13 @@ def analyze_file(
     for attempt in range(max_retries + 1):
         try:
             # Pass 1
-            pass1 = run_analysis_pass(client, file_path, file_content, language)
+            pass1 = run_analysis_pass(client, file_path, file_content, language, on_token=on_token)
 
             # Pass 2
-            pass2 = run_analysis_pass(client, file_path, file_content, language)
+            pass2 = run_analysis_pass(client, file_path, file_content, language, on_token=on_token)
 
             # Quorum judge
-            verdict = run_quorum_judge(client, file_path, pass1, pass2)
+            verdict = run_quorum_judge(client, file_path, pass1, pass2, on_token=on_token)
 
             if verdict.get("agree"):
                 return AnalysisResult(

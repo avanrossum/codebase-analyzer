@@ -105,8 +105,14 @@ def cli():
     default=None,
     help="Bearer token for LLM API authentication. Can also be set via LLM_API_TOKEN env var.",
 )
+@click.option(
+    "--show-streaming/--no-show-streaming",
+    default=False,
+    help="Show live token output as the LLM generates responses.",
+)
 def analyze(repo_path, output, profiles, profile_file, all_text_files,
-            model, ollama_url, max_retries, max_file_size, concurrency, api_token):
+            model, ollama_url, max_retries, max_file_size, concurrency, api_token,
+            show_streaming):
     """Analyze a codebase and generate file descriptions.
 
     REPO_PATH is the root directory of the repository to analyze.
@@ -199,8 +205,27 @@ def analyze(repo_path, output, profiles, profile_file, all_text_files,
 
                 console.print(f"[{i}/{total}] analyzing: {file_path}")
 
+                # Set up streaming token callback
+                token_callback = None
+                if show_streaming:
+                    _stream_phase = ""
+
+                    def _make_token_printer(file_idx, total_files, fpath):
+                        phase_count = [0]
+                        phases = ["pass 1", "pass 2", "quorum"]
+
+                        def printer(token: str):
+                            console.file.write(token)
+                            console.file.flush()
+
+                        return printer
+
+                    token_callback = _make_token_printer(i, total, file_path)
+                    console.print(f"  [dim]streaming...[/dim]")
+
                 try:
-                    result = analyze_file(client, file_path, content, max_retries=max_retries)
+                    result = analyze_file(client, file_path, content, max_retries=max_retries,
+                                          on_token=token_callback)
                 except ConnectionError as e:
                     console.print(f"\n[red]Lost connection to LLM server:[/red] {e}")
                     console.print("State saved. Resume by running the same command.")
@@ -212,6 +237,10 @@ def analyze(repo_path, output, profiles, profile_file, all_text_files,
                     console.print(f"[{i}/{total}] [red]error:[/red] {file_path}: {error_msg[:120]}")
                     db.update_status(file_path, "error", error_log=error_msg)
                     continue
+
+                if show_streaming:
+                    console.file.write("\n")
+                    console.file.flush()
 
                 # Update state and write output
                 if result.is_complete:

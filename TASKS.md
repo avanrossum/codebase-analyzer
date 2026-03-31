@@ -21,6 +21,7 @@ Master index of all task folders under `tasks/`. Update this file when a task is
 | `tasks/2026-03-30_analyzer-engine/` | Analyzer Engine | ✅ Complete | Ollama client, two-pass + quorum, retry loop — 44 tests |
 | `tasks/2026-03-30_output-generation/` | Output Generation | ✅ Complete | Markdown files, flagged JSON, run report — 20 tests |
 | `tasks/2026-03-30_cli-wiring/` | CLI Wiring | ✅ Complete | Full pipeline integration, progress, Ctrl+C — 6 integration tests |
+| `tasks/2026-03-31_bearer-token-auth/` | Bearer Token Auth | ✅ Complete | `--api-token` flag + `LLM_API_TOKEN` env var |
 
 ---
 

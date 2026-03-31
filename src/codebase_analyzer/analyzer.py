@@ -271,10 +271,13 @@ class LLMClient:
     - OpenAI API: /v1/chat/completions (used by LM Studio, vLLM, llama.cpp, etc.)
     """
 
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "qwen3:32b-q5_K_M"):
+    def __init__(self, base_url: str = "http://localhost:11434", model: str = "qwen3:32b-q5_K_M", api_token: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self._client = httpx.Client(timeout=300.0)
+        headers = {}
+        if api_token:
+            headers["Authorization"] = f"Bearer {api_token}"
+        self._client = httpx.Client(timeout=300.0, headers=headers)
         self._consecutive_failures = 0
         self._api_style: str | None = None  # "ollama" or "openai"
 

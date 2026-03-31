@@ -99,8 +99,14 @@ def cli():
     show_default=True,
     help="Number of parallel Ollama requests (1 is safest for single-GPU).",
 )
+@click.option(
+    "--api-token",
+    envvar="LLM_API_TOKEN",
+    default=None,
+    help="Bearer token for LLM API authentication. Can also be set via LLM_API_TOKEN env var.",
+)
 def analyze(repo_path, output, profiles, profile_file, all_text_files,
-            model, ollama_url, max_retries, max_file_size, concurrency):
+            model, ollama_url, max_retries, max_file_size, concurrency, api_token):
     """Analyze a codebase and generate file descriptions.
 
     REPO_PATH is the root directory of the repository to analyze.
@@ -174,7 +180,7 @@ def analyze(repo_path, output, profiles, profile_file, all_text_files,
         console.print()
 
         # Analysis loop
-        with LLMClient(base_url=ollama_url, model=model) as client:
+        with LLMClient(base_url=ollama_url, model=model, api_token=api_token) as client:
             for i, job in enumerate(jobs, 1):
                 if _shutdown_requested:
                     console.print(f"\n[yellow]Stopped after {i - 1}/{total} files.[/yellow]")

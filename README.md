@@ -78,7 +78,43 @@ codebase-analyzer analyze /path/to/repo --output ./analysis \
   --max-retries 3 \
   --max-file-size 100000 \
   --concurrency 1
+
+# Remote LLM server with authentication
+codebase-analyzer analyze /path/to/repo --output ./analysis \
+  --ollama-url https://your-server.example.com \
+  --model your-model-name \
+  --api-token $LLM_API_TOKEN
 ```
+
+### API Token Management
+
+If your LLM server requires authentication, pass a bearer token via `--api-token` or the `LLM_API_TOKEN` environment variable. Here are some options for managing it securely:
+
+**macOS Keychain (recommended on Mac — encrypted at rest, never in a plaintext file):**
+```bash
+# Store once
+security add-generic-password -a "$USER" -s "llm-api-token" -w "your-token-here"
+
+# Retrieve into env var
+export LLM_API_TOKEN=$(security find-generic-password -a "$USER" -s "llm-api-token" -w)
+
+# Or use an alias in ~/.zshrc
+alias lm-token='export LLM_API_TOKEN=$(security find-generic-password -a "$USER" -s "llm-api-token" -w)'
+```
+
+**1Password / Bitwarden CLI (best for multi-machine setups):**
+```bash
+export LLM_API_TOKEN=$(op read "op://Private/LLM Server/token")    # 1Password
+export LLM_API_TOKEN=$(bw get password "llm-api-token")             # Bitwarden
+```
+
+**direnv (per-project, auto-loads when you `cd` into the project):**
+```bash
+# .envrc in project root — make sure .envrc is in your .gitignore
+export LLM_API_TOKEN="your-token"
+```
+
+**Avoid** putting tokens directly in `~/.zshrc` or `~/.bashrc` — they're unencrypted, easy to accidentally commit, and visible to any process that reads your shell config.
 
 ### Relationship Mapping
 

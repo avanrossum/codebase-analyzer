@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-03-31
+> Last updated: 2026-04-03
 
 ---
 
@@ -19,7 +19,7 @@
 - [ ] Parallel analysis: concurrent Ollama requests for multi-GPU setups
 - [ ] Community profiles: Elixir, Kotlin, Swift, etc.
 - [ ] Embedding generation alongside descriptions for semantic search
-- [ ] OpenAI-compatible API as alternative local backend (partially done — LLMClient supports it)
+- [ ] OpenAI-compatible API as alternative local backend (done — LLMClient supports it, move to completed)
 - [ ] CI integration: GitHub Action to keep documentation in sync with code changes
 - [ ] User-configurable prompt snippets from `~/.codebase-analyzer/prompts/`
 
@@ -37,3 +37,7 @@
 - [x] OpenAI-compatible API support (LM Studio, vLLM, etc.)
 - [x] Live test: 3/3 files, 100% quorum pass (LM Studio + qwen3.5-35b-a3b)
 - [x] Published to GitHub (avanrossum/codebase-analyzer)
+- [x] Bearer token auth for remote endpoints
+- [x] Streaming support (eliminates Cloudflare proxy timeouts)
+- [x] Live token output (`--show-streaming`)
+- [x] Remote LM Studio test via Cloudflare tunnel (3/3 pass, zero timeouts)

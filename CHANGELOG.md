@@ -6,6 +6,16 @@ Format: entries grouped by date, with bullet points describing what changed.
 
 ---
 
+## [2026-03-31] — Remote LLM & Streaming
+
+- Bearer token authentication for remote LLM endpoints (`--api-token` / `LLM_API_TOKEN`)
+- Streaming support — default for all LLM calls, eliminates proxy timeouts
+- `--show-streaming` flag for live token output in the console
+- API token management guide in README (macOS Keychain, 1Password, direnv)
+- Successfully tested against remote LM Studio (lm.mipyip.com) via Cloudflare tunnel
+
+---
+
 ## [2026-03-30] — v0.1.0: Initial Working Release
 
 - Project scaffolding: pyproject.toml, CLI entry point, 12 language profiles, 8 prompt snippets

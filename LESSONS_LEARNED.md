@@ -19,3 +19,11 @@ First live test at 4096 context: most files got JSON parse failures (empty respo
 ## Per-file error handling is critical (2026-03-30)
 
 One bad file (context too large, model error) was crashing the entire run. API errors like context-length-exceeded must be caught per-file and logged, not propagated as fatal. The tool must keep going — that's the whole point of the resumable architecture.
+
+## Streaming solves proxy timeouts (2026-03-31)
+
+Cloudflare tunnel had a 30s timeout — `config.yaml` got a 524 on first (non-streaming) attempt. Switching to streaming (`"stream": true`) with SSE token-by-token reading resets the proxy timeout on each chunk. A 2-minute inference that streams tokens every 500ms never hits the timeout. This should be the default for any tool calling LLMs through proxies.
+
+## Three-machine architecture for large analysis runs (2026-03-31)
+
+For large codebases: M1 MBP holds the repo and runs the tool, Mac Studio runs LM Studio for inference, laptop SSHs in to monitor. Use `tmux` on the runner machine so the session persists. The tool's resume capability means even if the SSH drops or the machine reboots, progress is preserved in SQLite.
